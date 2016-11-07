@@ -1,7 +1,11 @@
+import time
 import sys
 from collections import Counter, defaultdict
 from itertools import groupby, combinations
-from typing import List, Generator
+from functools import wraps
+from pprint import PrettyPrinter
+
+pp = PrettyPrinter(indent=4)
 
 
 class FpNode:
@@ -65,7 +69,7 @@ class FpTree:
                                for k, v in counter.most_common()
                                if v >= self.min_support}
 
-    def update_tree(self, transaction: List[str]):
+    def update_tree(self, transaction):
         current = self.root
 
         for item in transaction:
@@ -92,24 +96,25 @@ class FpTree:
                 cpb[0].reverse()
                 if cpb[0]:
                     cpbs.append(cpb)
-            patterns.update(self.gen_combinations(suffix, cpbs))
-        patterns.update({tuple(k): v for k, v in self.frequent_items.items()})
+            patterns.update(self._gen_combinations(suffix, cpbs))
+        patterns.update({(k, ): v for k, v in self.frequent_items.items()})
         patterns = {k: v for k, v in patterns.items() if v >= self.min_support}
         return patterns
 
-    def gen_combinations(self, suffix, cpbs):
+    def _gen_combinations(self, suffix, cpbs):
         patterns = defaultdict(int)
         for cpb, count in cpbs:
             for i in range(1, len(cpb)+1):
                 for com in combinations(cpb, i):
-                    patterns[tuple(sorted([item.item for item in com] + [suffix]))] += count
+                    pattern = tuple(sorted([item.item for item in com] + [suffix]))
+                    patterns[pattern] += count
         return patterns
 
     def __str__(self):
         return self.root.tree_str()
 
 
-def load_data(file_name: str) -> Generator[List[str], None, None]:
+def load_data(file_name: str):
     with open(file_name, 'r') as input_file:
         data_gen = (line.split() for line in input_file.readlines())
 
@@ -117,7 +122,18 @@ def load_data(file_name: str) -> Generator[List[str], None, None]:
             yield [item[2] for item in group]
 
 
-def export_weka_arff(transactions: List[List[str]], file_name: str, item_num: int):
+def timefunc(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(func.__name__, end-start)
+        return result
+    return wrapper
+
+
+def export_weka_arff(transactions, file_name: str, item_num: int):
     with open(file_name, 'w') as output_file:
         output_file.write("@relation 'IBM data'\n")
         for i in range(item_num):
@@ -134,12 +150,14 @@ def export_weka_arff(transactions: List[List[str]], file_name: str, item_num: in
             output_file.write('}\n')
 
 
+@timefunc
 def find_frequent_patterns(transactions, min_support):
     tree = FpTree()
     tree.build_tree(transactions, min_support)
     return tree.mine_frequent_patterns()
 
 
+@timefunc
 def generate_association_rules(patterns, min_confidence):
     rules = {}
     for itemset in patterns.keys():
@@ -156,13 +174,16 @@ def generate_association_rules(patterns, min_confidence):
                         rules[tuple([cause, effect])] = confidence
     return rules
 
+
 if __name__ == "__main__":
+    pp = PrettyPrinter(indent=4)
+
     file_name, min_support_count, min_confidence = sys.argv[1:]
-    transactions = load_data(file_name)
-    patterns = find_frequent_patterns(transactions, min_support_count)
-    rules = generate_association_rules(patterns, min_confidence)
+    transactions = list(load_data(file_name))
+    patterns = find_frequent_patterns(transactions, int(min_support_count))
+    rules = generate_association_rules(patterns, float(min_confidence))
 
     print('-------pattern--------')
-    print(patterns)
+    pp.pprint(patterns)
     print('-------rule--------')
-    print(rules)
+    pp.pprint(rules)
