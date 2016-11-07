@@ -4,9 +4,10 @@ from itertools import groupby, combinations
 from functools import wraps
 from pprint import PrettyPrinter
 import fpgrowth
+import association_analysis_hashtree as hashtree
 
 
-def load_data(file_name: str):
+def load_data(file_name):
     with open(file_name, 'r') as input_file:
         data_gen = (line.split() for line in input_file.readlines())
 
@@ -25,7 +26,7 @@ def timefunc(func):
     return wrapper
 
 
-def export_weka_arff(transactions, file_name: str, item_num: int):
+def export_weka_arff(transactions, file_name, item_num):
     with open(file_name, 'w') as output_file:
         output_file.write("@relation 'IBM data'\n")
         for i in range(item_num):
@@ -43,11 +44,12 @@ def export_weka_arff(transactions, file_name: str, item_num: int):
 
 
 @timefunc
-def find_frequent_patterns(transactions, min_support, *, algorithm='fpgrowth'):
+def find_frequent_patterns(transactions, min_support, algorithm='fpgrowth'):
     if algorithm == 'fpgrowth':
-        return fpgrowth.find_frequent_patterns(transactions, min_support)
+        func = fpgrowth.find_frequent_patterns
     elif algorithm == 'hashtree':
-        pass
+        func = hashtree.find_frequent_patterns
+    return func(transactions, min_support)
 
 
 @timefunc

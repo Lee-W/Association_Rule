@@ -3,7 +3,6 @@
 import sys
 from itertools import groupby, combinations
 from operator import itemgetter, attrgetter
-import pyfpgrowth
 
 Transaction = []
 
@@ -263,9 +262,3 @@ def generate_association_rules(patterns, min_confidence):
                         rules[tuple([cause, effect])] = confidence
     return rules
 
-if __name__ == "__main__":
-    file_name, min_support, min_confidence = sys.argv[1:]
-    transactions = list(load_data(file_name))
-    transactions_num = len(transactions)
-    patterns = find_frequent_patterns(transactions, int(min_support)*transactions_num)
-    rules = generate_association_rules(patterns, float(min_confidence))
