@@ -7,10 +7,10 @@ import pyfpgrowth
 
 Transaction = []
 
-MinSup = 0.3
+min_support = 0.3
 MinConf = 0.7
 # Transaction_count
-N = 0
+transactions_num = 0
 # FrequentItemSet
 F = []
 # FrequentItemSet with support
@@ -48,12 +48,12 @@ class Candidate:
         for i in range(length):
             self.support.append(0)
     def extractFrequentSet(self):
-        global N
-        global MinSup
+        global transactions_num
+        global min_support
         returnSet = []
         returnCount = []
         for i,items in enumerate(self.candidate):
-            if self.support[i] >= N * MinSup:
+            if self.support[i] >= transactions_num * int(min_support):
                 returnSet.append(items)
                 returnCount.append(self.support[i])
 
@@ -211,22 +211,10 @@ def ruleGen(f, s):
                 Rule.append([p, suffix, conf])
                 ruleGen(f, s)
 
-if __name__ == "__main__":
-    data = load_data(sys.argv[1])
-    #Transaction = list(data)
-    Transaction = [
-      ['6', '3', '1', '7', '8'],
-      ['6', '3', '1', '2', '7'],
-      ['6', '2'],
-      ['3', '2', '8'],
-      ['6', '3', '1', '7', '8']
-      ]
-
-    ## initial and generate C1(candidatesets) and L1(F[0])
+def find_frequent_patterns(Transactions, min_support_count):
     lenItem = 1
     candidateSet = Candidate(lenItem)
-    for transaction in Transaction:
-        N = N + 1
+    for transaction in Transactions:
         for item in transaction:
             candidateSet.addSupport(item)
 
@@ -258,28 +246,26 @@ if __name__ == "__main__":
         for i, item in enumerate(candidatesets):
             l = sorted(item, key=lambda x: int(x))
             FreItemSet[tuple(l)] = setscount[i]
+    return FreItemSet
+def generate_association_rules(patterns, min_confidence):
+    rules = {}
+    for itemset in patterns.keys():
+        itemset_support = patterns[itemset]
+        for i in range(1, len(itemset)):
+            for com in combinations(itemset, i):
+                cause = tuple(sorted(com))
+                effect = tuple(sorted(set(itemset) - set(cause)))
 
-    #generate association rule
-    '''
-    count = 0
-    for item in FreItemSet.items():
-        print (item)
-        count += 1
-    print ("frequent_pattern_size",count)
-    print ("Now let's generate rules")
-    '''
-    for k in range(len(F)-1,0,-1):
-        for frequentItem in F[k]:
-            for subItem in frequentItem:
-                sufixRule = [subItem]
-                prefixRule = list(set(frequentItem) - set(sufixRule))
-                p = sorted(prefixRule, key=lambda x: int(x))
-                conf = float(FreItemSet[tuple(frequentItem)]) / FreItemSet[tuple(p)]
-                if conf >= MinConf:
-                    Rule.append([p,sufixRule, conf])
-                    ruleGen(frequentItem,sufixRule)
-    '''
-    print ("rule:")
-    for rules in Rule:
-        print (rules)
-    '''
+                if cause in patterns:
+                    confidence = itemset_support / patterns[cause]
+
+                    if confidence >= min_confidence:
+                        rules[tuple([cause, effect])] = confidence
+    return rules
+
+if __name__ == "__main__":
+    file_name, min_support, min_confidence = sys.argv[1:]
+    transactions = list(load_data(file_name))
+    transactions_num = len(transactions)
+    patterns = find_frequent_patterns(transactions, int(min_support)*transactions_num)
+    rules = generate_association_rules(patterns, float(min_confidence))
