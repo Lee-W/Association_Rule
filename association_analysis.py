@@ -1,32 +1,8 @@
 import sys
-from collections import Counter, OrderedDict
-from itertools import groupby
+from collections import Counter, defaultdict
+from itertools import groupby, combinations
 from typing import List, Generator
 
-
-def load_data(file_name: str) -> Generator[List[str], None, None]:
-    with open(file_name, 'r') as input_file:
-        data_gen = (line.split() for line in input_file.readlines())
-
-        for _, group in groupby(data_gen, lambda x: x[0]):
-            yield [item[2] for item in group]
-
-
-def export_weka_arff(transactions: List[List[str]], file_name: str, item_num: int):
-    with open(file_name, 'w') as output_file:
-        output_file.write("@relation 'IBM data'\n")
-        for i in range(item_num):
-            output_file.write('@attribute {} {{F, T}}\n'.format(i))
-        output_file.write('@data\n')
-
-        for trans in transactions:
-            output_file.write('{')
-            output_file.write('{} T'.format(trans[0]))
-
-            for item in trans[1:]:
-                output_file.write(' ,{} T'.format(item))
-
-            output_file.write('}\n')
 
 class FpNode:
     def __init__(self, item, count, parent):
@@ -105,7 +81,6 @@ class FpTree:
                 current = current.add_child(node)
 
     def mine_frequent_patterns(self):
-        cond_pat_bases = dict()
         patterns = dict()
         for suffix, nodes in self.header_table.items():
             cpbs = list()
@@ -134,8 +109,60 @@ class FpTree:
         return self.root.tree_str()
 
 
-if __name__ == "__main__":
-    transactions = load_data(sys.argv[1])
+def load_data(file_name: str) -> Generator[List[str], None, None]:
+    with open(file_name, 'r') as input_file:
+        data_gen = (line.split() for line in input_file.readlines())
+
+        for _, group in groupby(data_gen, lambda x: x[0]):
+            yield [item[2] for item in group]
+
+
+def export_weka_arff(transactions: List[List[str]], file_name: str, item_num: int):
+    with open(file_name, 'w') as output_file:
+        output_file.write("@relation 'IBM data'\n")
+        for i in range(item_num):
+            output_file.write('@attribute {} {{F, T}}\n'.format(i))
+        output_file.write('@data\n')
+
+        for trans in transactions:
+            output_file.write('{')
+            output_file.write('{} T'.format(trans[0]))
+
+            for item in trans[1:]:
+                output_file.write(' ,{} T'.format(item))
+
+            output_file.write('}\n')
+
+
+def find_frequent_patterns(transactions, min_support):
     tree = FpTree()
-    tree.build_tree(transactions, sys.argv[2])
-    result = tree.mine_frequent_patterns()
+    tree.build_tree(transactions, min_support)
+    return tree.mine_frequent_patterns()
+
+
+def generate_association_rules(patterns, min_confidence):
+    rules = {}
+    for itemset in patterns.keys():
+        itemset_support = patterns[itemset]
+        for i in range(1, len(itemset)):
+            for com in combinations(itemset, i):
+                cause = tuple(sorted(com))
+                effect = tuple(sorted(set(itemset) - set(cause)))
+
+                if cause in patterns:
+                    confidence = itemset_support / patterns[cause]
+
+                    if confidence >= min_confidence:
+                        rules[tuple([cause, effect])] = confidence
+    return rules
+
+if __name__ == "__main__":
+    file_name, min_support_count, min_confidence = sys.argv[1:]
+    transactions = load_data(file_name)
+    patterns = find_frequent_patterns(transactions, min_support_count)
+    rules = generate_association_rules(patterns, min_confidence)
+
+    print('-------pattern--------')
+    print(patterns)
+    print('-------rule--------')
+    print(rules)
