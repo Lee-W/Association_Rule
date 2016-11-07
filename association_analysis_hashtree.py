@@ -87,38 +87,25 @@ class HashTree:
                 prefixItem = subitem[:level]
                 sufixItem = subitem[level:]
                 for sitem in sufixItem:
-                    #print ("sitem",sitem)
                     tempbucket.append(prefixItem + [sitem])
-            ###|| It is also a big mistake, I used list(sitem) ago, and is will convert ths string '11' to ['1', '1']
-            #print ("tempbucket",tempbucket)
             self.items = tempbucket
 
         else:
-            # point the left , mid and right storage
             leftItems = []
             midItems = []
             rightItems = []
 
             for subitem in self.items:
-                #print ("subitem",subitem)
-                # get the number of the availale prefix item
                 numPre = len(subitem) - self.length + 1
-                #print ("numPre",numPre)
-                ###|| It is big mistake, I added  " - level" ao
-                # level: equals to the number of prefix
                 for index in range(level, level+numPre):
-                    # get the subitem. for example: abcd->abcd, bcd, cd
                     tempItem = subitem[:level] + subitem[index:]
-                    #print (tempItem)
                     hashValue = int(subitem[index]) % 3
-                    # hash to the different bucket
                     if hashValue == 0:
                         leftItems.append(tempItem)
                     elif hashValue == 1:
                         midItems.append(tempItem)
                     else:
                         rightItems.append(tempItem)
-            # judge whether the list is empty or not
             if len(leftItems) != 0:
                 self.leftChild = HashTree(leftItems, self.length, level + 1)
             if len(midItems) != 0:
@@ -140,7 +127,6 @@ class HashTree:
             if hashvalue == 0:
                 if self.leftChild == None:
                     return False
-                ###|| Forget the condition of no son
                 return self.leftChild.identifyCandidate(candidate, level + 1)
             elif hashvalue == 1:
                 if self.midChild == None:
@@ -157,13 +143,6 @@ def subset(candidateSet, root):
         level = 0
         if root.identifyCandidate(candidateSet.getOneCandidate(index), level):
             candidateSet.addSupport(None, index)
-
-def load_data(file_name):
-    with open(file_name, 'r') as input_file:
-        data_gen = (line.split() for line in input_file.readlines())
-
-        for _, group in groupby(data_gen, lambda x: x[0]):
-            yield [item[2] for item in group]
 
 def candiGen(itemsets, length):
     candidateset = []
@@ -246,19 +225,4 @@ def find_frequent_patterns(Transactions, min_support_count):
             l = sorted(item, key=lambda x: int(x))
             FreItemSet[tuple(l)] = setscount[i]
     return FreItemSet
-def generate_association_rules(patterns, min_confidence):
-    rules = {}
-    for itemset in patterns.keys():
-        itemset_support = patterns[itemset]
-        for i in range(1, len(itemset)):
-            for com in combinations(itemset, i):
-                cause = tuple(sorted(com))
-                effect = tuple(sorted(set(itemset) - set(cause)))
-
-                if cause in patterns:
-                    confidence = itemset_support / patterns[cause]
-
-                    if confidence >= min_confidence:
-                        rules[tuple([cause, effect])] = confidence
-    return rules
 
