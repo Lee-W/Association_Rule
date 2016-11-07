@@ -28,35 +28,6 @@ def export_weka_arff(transactions: List[List[str]], file_name: str, item_num: in
 
             output_file.write('}\n')
 
-
-def fp_growth(transactions: List[List[str]], min_support: int):
-    counter = Counter()
-    transactions = list(transactions)
-    for trans in transactions:
-        counter += Counter(trans)
-
-    head_table = OrderedDict()
-    non_frequent_items = set()
-    for k, v in counter.most_common():
-        if v < min_support:
-            non_frequent_items.add(v)
-        head_table[k] = v
-
-    sorted_transcations = list()
-    for trans in transactions:
-        trans = filter(lambda x: x not in non_frequent_items, trans)
-        sorted_transcations.append(
-            sorted(trans, key=lambda x: counter[x], reverse=True)
-        )
-
-    tree = FpTree()
-    for trans in sorted_transcations:
-        tree.update_tree(trans)
-
-    print(tree)
-    print(tree.header_table)
-
-
 class FpNode:
     def __init__(self, item, count, parent):
         self.item = item
@@ -95,9 +66,28 @@ class FpNode:
 
 
 class FpTree:
-    def __init__(self):
-        self.root = FpNode('Null', 0, None)
+    def __init__(self, suffix=None):
+        self.root = FpNode(suffix, -1, None)
         self.header_table = dict()
+
+    def build_tree(self, transactions, min_support):
+        self.min_support = min_support
+
+        self.find_frequent_item(transactions)
+
+        for trans in transactions:
+            trans = filter(lambda x: x in self.frequent_items, trans)
+            sorted_trans = sorted(trans, key=lambda x: self.frequent_items[x], reverse=True)
+            self.update_tree(sorted_trans)
+
+    def find_frequent_item(self, transactions):
+        counter = Counter()
+        for trans in transactions:
+            counter += Counter(trans)
+
+        self.frequent_items = {k: v
+                               for k, v in counter.most_common()
+                               if v >= self.min_support}
 
     def update_tree(self, transaction: List[str]):
         current = self.root
@@ -114,10 +104,38 @@ class FpTree:
             else:
                 current = current.add_child(node)
 
+    def mine_frequent_patterns(self):
+        cond_pat_bases = dict()
+        patterns = dict()
+        for suffix, nodes in self.header_table.items():
+            cpbs = list()
+            for node in nodes:
+                cpb = (list(), node.count)
+                while node.parent != self.root:
+                    node = node.parent
+                    cpb[0].append(node)
+                cpb[0].reverse()
+                if cpb[0]:
+                    cpbs.append(cpb)
+            patterns.update(self.gen_combinations(suffix, cpbs))
+        patterns.update({tuple(k): v for k, v in self.frequent_items.items()})
+        patterns = {k: v for k, v in patterns.items() if v >= self.min_support}
+        return patterns
+
+    def gen_combinations(self, suffix, cpbs):
+        patterns = defaultdict(int)
+        for cpb, count in cpbs:
+            for i in range(1, len(cpb)+1):
+                for com in combinations(cpb, i):
+                    patterns[tuple(sorted([item.item for item in com] + [suffix]))] += count
+        return patterns
+
     def __str__(self):
         return self.root.tree_str()
 
 
 if __name__ == "__main__":
     transactions = load_data(sys.argv[1])
-    fp_growth(transactions, 5)
+    tree = FpTree()
+    tree.build_tree(transactions, sys.argv[2])
+    result = tree.mine_frequent_patterns()
