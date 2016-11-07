@@ -71,13 +71,25 @@ def generate_association_rules(patterns, min_confidence):
 if __name__ == "__main__":
     pp = PrettyPrinter(indent=4)
 
-    file_name, min_support, min_confidence = sys.argv[1:]
-    transactions = list(load_data(file_name))
-    transactions_num = len(transactions)
-    patterns = find_frequent_patterns(transactions, float(min_support)*transactions_num)
-    rules = generate_association_rules(patterns, float(min_confidence))
+    if len(sys.argv) == 5:
+        file_name, min_support, min_confidence, algorithm = sys.argv[1:]
+        min_support, min_confidence = float(min_support), float(min_confidence)
 
-    print('-------pattern--------')
-    pp.pprint(patterns)
-    print('-------rule--------')
-    pp.pprint(rules)
+        transactions = list(load_data(file_name))
+        min_support_count = min_support * len(transactions)
+
+        patterns = find_frequent_patterns(transactions, min_support_count)
+        rules = generate_association_rules(patterns, min_confidence)
+
+        print('-------pattern--------')
+        pp.pprint(patterns)
+        print('-------rule--------')
+        pp.pprint(rules)
+    else:
+        print(
+            'Usage:\n'
+            '\tpython association_analysis.py input_file min_support min_confidence [algorithm]\n'
+            'Algorithms:\n'
+            '\tfpgrowth\n'
+            '\thashtree\n'
+        )
