@@ -178,9 +178,10 @@ def generate_association_rules(patterns, min_confidence):
 if __name__ == "__main__":
     pp = PrettyPrinter(indent=4)
 
-    file_name, min_support_count, min_confidence = sys.argv[1:]
+    file_name, min_support, min_confidence = sys.argv[1:]
     transactions = list(load_data(file_name))
-    patterns = find_frequent_patterns(transactions, int(min_support_count))
+    transactions_num = len(transactions)
+    patterns = find_frequent_patterns(transactions, int(min_support)*transactions_num)
     rules = generate_association_rules(patterns, float(min_confidence))
 
     print('-------pattern--------')
