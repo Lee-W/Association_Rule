@@ -3,8 +3,9 @@ import sys
 from itertools import groupby, combinations
 from functools import wraps
 from pprint import PrettyPrinter
-import fpgrowth
-import association_analysis_hashtree as hashtree
+
+from . import fpgrowth
+from . import association_analysis_hashtree as hashtree
 
 
 def load_data(file_name):
