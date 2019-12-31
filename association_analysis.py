@@ -91,7 +91,8 @@ if __name__ == "__main__":
     else:
         print(
             "Usage:\n"
-            "\tpython association_analysis.py input_file min_support min_confidence [algorithm]\n"
+            "\tpython association_analysis.py input_file min_support "
+            "min_confidence [algorithm]\n"
             "Algorithms:\n"
             "\tfpgrowth\n"
             "\thashtree\n"

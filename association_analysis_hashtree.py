@@ -1,9 +1,5 @@
 # implement aporiori algorithm with hash tree
 
-import sys
-from itertools import groupby, combinations
-from operator import itemgetter, attrgetter
-
 Transaction = []
 
 min_support = 0.3
@@ -30,14 +26,14 @@ class Candidate:
             self.support.append(0)
 
     def addSupport(self, candidate=None, index=None):
-        if index != None:
+        if index is not None:
             self.support[index] = self.support[index] + 1
-        elif candidate != None:
+        elif candidate is not None:
             if candidate in self.candidate:
                 try:
                     index = self.candidate.index(candidate)
                     self.support[index] = self.support[index] + 1
-                except:
+                except Exception:
                     print("candidate index error")
             else:
                 self.candidate.append(candidate)
@@ -134,15 +130,15 @@ class HashTree:
             hashvalue = int(candidate[level]) % 3
 
             if hashvalue == 0:
-                if self.leftChild == None:
+                if self.leftChild is not None:
                     return False
                 return self.leftChild.identifyCandidate(candidate, level + 1)
             elif hashvalue == 1:
-                if self.midChild == None:
+                if self.midChild is not None:
                     return False
                 return self.midChild.identifyCandidate(candidate, level + 1)
             else:
-                if self.rightChild == None:
+                if self.rightChild is not None:
                     return False
                 return self.rightChild.identifyCandidate(candidate, level + 1)
 
@@ -210,7 +206,7 @@ def find_frequent_patterns(Transactions, min_support_count):
             candidateSet.addSupport(item)
 
     candidatesets, setscount = candidateSet.extractFrequentSet()
-    F.append(candidatesets)  ## multi-layer list : store L1-Ln
+    F.append(candidatesets)  # multi-layer list : store L1-Ln
     for i, item in enumerate(candidatesets):
         FreItemSet[tuple([item])] = setscount[i]
 
@@ -235,6 +231,6 @@ def find_frequent_patterns(Transactions, min_support_count):
 
         F.append(candidatesets)
         for i, item in enumerate(candidatesets):
-            l = sorted(item, key=lambda x: int(x))
-            FreItemSet[tuple(l)] = setscount[i]
+            sorted_item = sorted(item, key=lambda x: int(x))
+            FreItemSet[tuple(sorted_item)] = setscount[i]
     return FreItemSet
