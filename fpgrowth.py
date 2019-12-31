@@ -30,16 +30,16 @@ class FpNode:
         return node in self.children
 
     def tree_str(self, level=0):
-        ret = '   '*level + '{} ({})\n'.format(self.item, self.count)
+        ret = "   " * level + "{} ({})\n".format(self.item, self.count)
         for child in self.children:
-            ret += child.tree_str(level+1)
+            ret += child.tree_str(level + 1)
         return ret
 
     def __eq__(self, other):
         return self.item == other.item
 
     def __str__(self):
-        return '{} ({})'.format(self.item, self.count)
+        return "{} ({})".format(self.item, self.count)
 
     def __repr__(self):
         return self.__str__()
@@ -57,7 +57,9 @@ class FpTree:
 
         for trans in transactions:
             trans = filter(lambda x: x in self.frequent_items, trans)
-            sorted_trans = sorted(trans, key=lambda x: self.frequent_items[x], reverse=True)
+            sorted_trans = sorted(
+                trans, key=lambda x: self.frequent_items[x], reverse=True
+            )
             self.update_tree(sorted_trans)
 
     def find_frequent_item(self, transactions):
@@ -65,9 +67,9 @@ class FpTree:
         for trans in transactions:
             counter += Counter(trans)
 
-        self.frequent_items = {k: v
-                               for k, v in counter.most_common()
-                               if v >= self.min_support}
+        self.frequent_items = {
+            k: v for k, v in counter.most_common() if v >= self.min_support
+        }
 
     def update_tree(self, transaction):
         current = self.root
@@ -97,14 +99,14 @@ class FpTree:
                 if cpb[0]:
                     cpbs.append(cpb)
             patterns.update(self._gen_combinations(suffix, cpbs))
-        patterns.update({(k, ): v for k, v in self.frequent_items.items()})
+        patterns.update({(k,): v for k, v in self.frequent_items.items()})
         patterns = {k: v for k, v in patterns.items() if v >= self.min_support}
         return patterns
 
     def _gen_combinations(self, suffix, cpbs):
         patterns = defaultdict(int)
         for cpb, count in cpbs:
-            for i in range(1, len(cpb)+1):
+            for i in range(1, len(cpb) + 1):
                 for com in combinations(cpb, i):
                     pattern = tuple(sorted([item.item for item in com] + [suffix]))
                     patterns[pattern] += count

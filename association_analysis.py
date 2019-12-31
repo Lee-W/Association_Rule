@@ -8,7 +8,7 @@ import association_analysis_hashtree as hashtree
 
 
 def load_data(file_name):
-    with open(file_name, 'r') as input_file:
+    with open(file_name, "r") as input_file:
         data_gen = (line.split() for line in input_file.readlines())
 
         for _, group in groupby(data_gen, lambda x: x[0]):
@@ -21,33 +21,34 @@ def timefunc(func):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        print(func.__name__, end-start)
+        print(func.__name__, end - start)
         return result
+
     return wrapper
 
 
 def export_weka_arff(transactions, file_name, item_num):
-    with open(file_name, 'w') as output_file:
+    with open(file_name, "w") as output_file:
         output_file.write("@relation 'IBM data'\n")
         for i in range(item_num):
-            output_file.write('@attribute {} {{F, T}}\n'.format(i))
-        output_file.write('@data\n')
+            output_file.write("@attribute {} {{F, T}}\n".format(i))
+        output_file.write("@data\n")
 
         for trans in transactions:
-            output_file.write('{')
-            output_file.write('{} T'.format(trans[0]))
+            output_file.write("{")
+            output_file.write("{} T".format(trans[0]))
 
             for item in trans[1:]:
-                output_file.write(' ,{} T'.format(item))
+                output_file.write(" ,{} T".format(item))
 
-            output_file.write('}\n')
+            output_file.write("}\n")
 
 
 @timefunc
-def find_frequent_patterns(transactions, min_support, algorithm='fpgrowth'):
-    if algorithm == 'fpgrowth':
+def find_frequent_patterns(transactions, min_support, algorithm="fpgrowth"):
+    if algorithm == "fpgrowth":
         func = fpgrowth.find_frequent_patterns
-    elif algorithm == 'hashtree':
+    elif algorithm == "hashtree":
         func = hashtree.find_frequent_patterns
     return func(transactions, min_support)
 
@@ -83,15 +84,15 @@ if __name__ == "__main__":
         patterns = find_frequent_patterns(transactions, min_support_count)
         rules = generate_association_rules(patterns, min_confidence)
 
-        print('-------pattern--------')
+        print("-------pattern--------")
         pp.pprint(patterns)
-        print('-------rule--------')
+        print("-------rule--------")
         pp.pprint(rules)
     else:
         print(
-            'Usage:\n'
-            '\tpython association_analysis.py input_file min_support min_confidence [algorithm]\n'
-            'Algorithms:\n'
-            '\tfpgrowth\n'
-            '\thashtree\n'
+            "Usage:\n"
+            "\tpython association_analysis.py input_file min_support min_confidence [algorithm]\n"
+            "Algorithms:\n"
+            "\tfpgrowth\n"
+            "\thashtree\n"
         )

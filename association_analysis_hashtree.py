@@ -17,16 +17,19 @@ FreItemSet = {}
 # Association_rule
 Rule = []
 
+
 class Candidate:
     def __init__(self, k):
         self.length = k
         self.candidate = []
         self.support = []
+
     def addCandidate(self, candidate):
         if candidate not in self.candidate:
             self.candidate.append(candidate)
             self.support.append(0)
-    def addSupport(self, candidate = None, index = None):
+
+    def addSupport(self, candidate=None, index=None):
         if index != None:
             self.support[index] = self.support[index] + 1
         elif candidate != None:
@@ -35,36 +38,43 @@ class Candidate:
                     index = self.candidate.index(candidate)
                     self.support[index] = self.support[index] + 1
                 except:
-                    print ('candidate index error')
+                    print("candidate index error")
             else:
                 self.candidate.append(candidate)
                 self.support.append(1)
         else:
-            print ('wrong because candidate and index both none')
+            print("wrong because candidate and index both none")
+
     def addAll(self, candidatesets):
         self.candidate = candidatesets
         length = len(self.candidate)
         for i in range(length):
             self.support.append(0)
+
     def extractFrequentSet(self):
         global transactions_num
         global min_support
         returnSet = []
         returnCount = []
-        for i,items in enumerate(self.candidate):
+        for i, items in enumerate(self.candidate):
             if self.support[i] >= transactions_num * int(min_support):
                 returnSet.append(items)
                 returnCount.append(self.support[i])
 
         return returnSet, returnCount
+
     def getNumOfCandidate(self):
         return len(self.candidate)
+
     def getOneCandidate(self, index):
         return self.candidate[index]
-    def getAllCandidate(self) :
+
+    def getAllCandidate(self):
         return self.candidate
+
     def getAllNumber(self):
         return self.support
+
 
 # The Hash Tree class, use the Hash Function: h(p) = p mod 3
 class HashTree:
@@ -97,7 +107,7 @@ class HashTree:
 
             for subitem in self.items:
                 numPre = len(subitem) - self.length + 1
-                for index in range(level, level+numPre):
+                for index in range(level, level + numPre):
                     tempItem = subitem[:level] + subitem[index:]
                     hashValue = int(subitem[index]) % 3
                     if hashValue == 0:
@@ -123,7 +133,6 @@ class HashTree:
         else:
             hashvalue = int(candidate[level]) % 3
 
-
             if hashvalue == 0:
                 if self.leftChild == None:
                     return False
@@ -137,6 +146,7 @@ class HashTree:
                     return False
                 return self.rightChild.identifyCandidate(candidate, level + 1)
 
+
 def subset(candidateSet, root):
     numCandidate = candidateSet.getNumOfCandidate()
     for index in range(numCandidate):
@@ -144,21 +154,22 @@ def subset(candidateSet, root):
         if root.identifyCandidate(candidateSet.getOneCandidate(index), level):
             candidateSet.addSupport(None, index)
 
+
 def candiGen(itemsets, length):
     candidateset = []
     numItem = len(itemsets)
 
-    for i in range(numItem-1):
-        for j in range(i+1, numItem):
+    for i in range(numItem - 1):
+        for j in range(i + 1, numItem):
             tempCandidate = []
-            if(length > 2):
-                for y in range(length-1):
+            if length > 2:
+                for y in range(length - 1):
                     tempCandidate.append(itemsets[i][y])
-                for x in range(length-1):
+                for x in range(length - 1):
                     if itemsets[j][x] not in itemsets[i]:
                         tempCandidate.append(itemsets[j][x])
 
-                if len(tempCandidate)==length:
+                if len(tempCandidate) == length:
                     tempCandidate.sort()
                     if tempCandidate not in candidateset:
                         candidateset.append(tempCandidate)
@@ -166,10 +177,11 @@ def candiGen(itemsets, length):
                 tempCandidate.append(itemsets[i])
                 tempCandidate.append(itemsets[j])
                 C = sorted(tempCandidate, key=lambda x: int(x))
-                if(len(tempCandidate)==length):
+                if len(tempCandidate) == length:
                     candidateset.append(C)
 
     return candidateset
+
 
 def ruleGen(f, s):
     lenItem = len(f)
@@ -182,12 +194,13 @@ def ruleGen(f, s):
             suffix = s.copy()
             suffix.append(obj)
 
-            prefix = list(set(prefixLine)-set(obj))
+            prefix = list(set(prefixLine) - set(obj))
             p = sorted(prefix, key=lambda x: int(x))
             conf = float(FreItemSet[tuple(f)]) / FreItemSet[tuple(p)]
             if conf >= MinConf:
                 Rule.append([p, suffix, conf])
                 ruleGen(f, s)
+
 
 def find_frequent_patterns(Transactions, min_support_count):
     lenItem = 1
@@ -197,7 +210,7 @@ def find_frequent_patterns(Transactions, min_support_count):
             candidateSet.addSupport(item)
 
     candidatesets, setscount = candidateSet.extractFrequentSet()
-    F.append(candidatesets) ## multi-layer list : store L1-Ln
+    F.append(candidatesets)  ## multi-layer list : store L1-Ln
     for i, item in enumerate(candidatesets):
         FreItemSet[tuple([item])] = setscount[i]
 
@@ -205,7 +218,7 @@ def find_frequent_patterns(Transactions, min_support_count):
     while True:
         lenItem = lenItem + 1
         candidateSet = Candidate(lenItem)
-        candidateSet.addAll(candiGen(F[lenItem-2], lenItem))
+        candidateSet.addAll(candiGen(F[lenItem - 2], lenItem))
 
         # Generate the Hash Tree
         for transaction in Transaction:
@@ -225,4 +238,3 @@ def find_frequent_patterns(Transactions, min_support_count):
             l = sorted(item, key=lambda x: int(x))
             FreItemSet[tuple(l)] = setscount[i]
     return FreItemSet
-
